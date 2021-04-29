@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System;
+using System.Diagnostics;
+using System.IO;
 using System.Threading.Tasks;
 
 namespace SPAM
@@ -13,7 +15,7 @@ namespace SPAM
             try
             {
                 var configuration = new ConfigurationBuilder()
-                    .AddJsonFile($"appsettings.json", true, true)
+                    .AddJsonFile($"{GetBasePath()}/appsettings.json", false, false)
                     .Build();
 
                 var appSettings = configuration.Get<AppSettings>();
@@ -36,7 +38,16 @@ namespace SPAM
             catch (Exception ex)
             {
                 Consoler.WriteError("SPAM Failed Unexpectedly.", ex.Message);
+
+                Console.ReadKey();
             }
+        }
+
+        private static string GetBasePath()
+        {
+            using var processModule = Process.GetCurrentProcess().MainModule;
+
+            return Path.GetDirectoryName(processModule?.FileName);
         }
     }
 }
