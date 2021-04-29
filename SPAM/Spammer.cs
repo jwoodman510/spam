@@ -57,7 +57,16 @@ namespace SPAM
             {
                 Consoler.WriteLines(ConsoleColor.Cyan, $"Processing Batch No. {metrics.BatchNumber} | Request Count: {batch.Count}");
 
-                await Task.WhenAll(batch.Select(x => _httpClient.SendAsync(x).ContinueWith(x => x.IsFaulted ? null : x)));
+                var results = await Task.WhenAll(batch.Select(x => _httpClient.SendAsync(x).ContinueWith(x => x.IsFaulted ? null : x)));
+
+                var successCount = results.Where(x => x?.Result?.IsSuccessStatusCode == true).Count();
+                var failedCount = results.Length - successCount;
+
+
+                Consoler.WriteLines(ConsoleColor.Green, $"Batch No. {metrics.BatchNumber} Processed. Success={successCount} Failed={failedCount}");
+
+                metrics.SuccessCount += successCount;
+                metrics.FailedCount += failedCount;
             }
             catch (Exception ex)
             {
@@ -67,7 +76,6 @@ namespace SPAM
             {
                 metrics.ProcessedCount += batch.Count;
 
-                Consoler.WriteLines(ConsoleColor.Green, $"Batch No. {metrics.BatchNumber} Processed.");
                 Consoler.WriteLines(ConsoleColor.White, $"Requests Processed: {metrics.ProcessedCount}.");
 
                 metrics.BatchNumber++;
@@ -116,6 +124,10 @@ namespace SPAM
             public int BatchNumber { get; set; } = 1;
 
             public int ProcessedCount { get; set; }
+
+            public int SuccessCount { get; set; }
+
+            public int FailedCount { get; set; }
         }
     }
 }
